@@ -1,0 +1,804 @@
+.deal-profit {
+    --input-height: 32px;
+    --vehicle-profit-color: var(--admss-app-light-purple);
+    --vehicle-profit-accent-color: var(--admss-app-deep-purple);
+    --vehicle-profit-button-color: var(--admss-app-focus-purple);
+
+    --commission-color: var(--admss-app-light-dusty-blue);
+    --commission-accent-color: var(--admss-app-dusty-blue);
+    --commission-button-color: var(--admss-app-button-dusty-blue);
+
+    --finance-color: var(--admss-app-light-red);
+    --finance-accent-color: var(--admss-app-deep-red);
+
+    --interest-color: var(--admss-app-light-green);
+    --interest-accent-color: var(--admss-app-deep-green);
+
+    --totals-color: var(--admss-app-lightest-blue-violet);
+    --totals-text-color: var(--admss-app-blue-violet);
+    --totals-accent-color: var(--admss-app-light-blue-violet);
+
+    .p-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 45px;
+        .p-button-icon {
+            padding-top: 4px;
+            font-size: 26px;
+        }
+        .p-button-label {
+            flex-grow: 0;
+        }
+    }
+
+    .profit-card {
+        .p-card-body {
+            width: 100%;
+        }
+        .deal-profit__item,
+        .totals-row {
+            &:not(.deal-profit__item--bold) {
+                .deal-profit__value {
+                    font-weight: 400;
+                }
+            }
+
+            &:first-child {
+                margin-top: 20px;
+            }
+            &:first-child .deal-profit__includes::before {
+                content: "A B";
+                padding: 10px 0;
+                font-size: 14px;
+                text-align: center;
+                letter-spacing: 0.2rem;
+                height: 84%;
+                width: 100%;
+                border-radius: 6px 6px 0 0;
+            }
+            &:last-child .deal-profit__includes::before {
+                top: -10px;
+                height: 100%;
+                border-radius: 0 0 6px 6px;
+            }
+        }
+
+        .profit-card__body {
+            padding-bottom: 30px;
+
+            .currency-item {
+                .currency-item__input {
+                    height: 32px;
+                }
+
+                .input-icon {
+                    height: 32px;
+                    width: 32px;
+                }
+            }
+
+            .radio-item,
+            .radio-item__input {
+                font-size: 12px;
+                font-weight: 400;
+                height: 32px;
+            }
+
+            .radio-item {
+                .p-radiobutton-box {
+                    width: 16px;
+                    height: 16px;
+                }
+
+                .radio-item__input {
+                    width: 32px;
+                    .p-radiobutton-checked .p-radiobutton-box.p-highlight {
+                        box-shadow: inset 0 0 0 1px var(--admss-app-dark-green);
+                    }
+                }
+            }
+
+            .p-inputtext {
+                font-size: 14px;
+                height: 32px;
+                max-width: 140px;
+                flex: 1 1 140px;
+            }
+        }
+
+        .splitter__line {
+            margin: 0;
+            z-index: 1;
+        }
+    }
+
+    .deal-profit__item,
+    .totals-row {
+        .deal-profit__label {
+            min-width: 15%;
+        }
+
+        .deal-profit__value {
+            display: flex;
+            flex-wrap: nowrap;
+        }
+
+        .deal-profit__includes {
+            position: relative;
+            padding: 30px 6px;
+            width: 58px;
+            flex: 0 0 58px;
+            margin-left: auto;
+            .p-checkbox-box {
+                z-index: 1;
+            }
+
+            &::before {
+                content: "";
+                position: absolute;
+                font-weight: 700;
+                white-space: nowrap;
+                bottom: 0;
+                right: 0;
+                display: block;
+                width: 100%;
+                height: 90%;
+            }
+        }
+    }
+}
+
+.profit-card__header {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 10px 20px;
+    height: 50px;
+    text-transform: uppercase;
+    &.vehicle-profit__header {
+        border-radius: 6px 6px 0 0;
+        background-color: var(--vehicle-profit-color);
+        color: var(--vehicle-profit-accent-color);
+    }
+}
+
+.profit-card {
+    overflow: hidden;
+    .p-card-body,
+    .p-card-content {
+        padding: 0;
+    }
+    &.vehicle-profit {
+        box-shadow: 0 0 3px 0 var(--vehicle-profit-accent-color);
+    }
+}
+
+.profit-card__body {
+    padding: 20px;
+}
+
+.deal-profit__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: "Open Sans", sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    height: var(--input-height);
+    .currency-item__input {
+        width: 140px;
+    }
+    &.deal-profit__item--blue {
+        color: var(--admss-app-dusty-blue);
+    }
+    &.deal-profit__item--purple {
+        color: var(--vehicle-profit-accent-color);
+    }
+    &.deal-profit__item--green {
+        color: var(--interest-accent-color);
+    }
+    &.deal-profit__item--bold {
+        font-weight: 700;
+    }
+    .currency-item__input,
+    .p-inputtext,
+    .p-inputnumber {
+        height: var(--input-height);
+        font-size: 14px;
+        &:focus {
+            box-shadow: none;
+        }
+    }
+    .deal-profit__currency-select {
+        width: 54px;
+        height: var(--input-height);
+        margin-left: auto;
+        margin-right: 10px;
+        font-size: 14px;
+        .p-dropdown-trigger {
+            height: var(--input-height);
+            width: 24px;
+        }
+        .p-dropdown-label {
+            height: var(--input-height);
+            line-height: 1;
+        }
+        .p-inputtext {
+            text-overflow: initial;
+            font-size: 14px;
+            height: var(--input-height);
+            align-items: center;
+        }
+    }
+    .currency-item__icon {
+        width: var(--input-height);
+    }
+    .deal-profit__includes {
+        display: flex;
+        margin-left: 15px;
+        align-items: center;
+        justify-content: space-between;
+        width: 45px;
+    }
+}
+
+.vehicle-profit {
+    .splitter__line {
+        border-color: var(--vehicle-profit-accent-color);
+    }
+
+    .vehicle-profit__body.profit-card__body {
+        padding-top: 0;
+        padding-bottom: 28px;
+    }
+    .deal-profit__item {
+        font-size: 14px;
+        &:first-child .deal-profit__includes::before {
+            color: var(--vehicle-profit-accent-color);
+        }
+        &:last-child {
+            .deal-profit__includes::before {
+                padding-bottom: 0px;
+                border-radius: 0 0 6px 6px;
+            }
+        }
+
+        .deal-profit__includes {
+            &::before {
+                background-color: var(--vehicle-profit-color);
+            }
+        }
+
+        .deal-profit__label {
+            flex: 0 0 35%;
+            white-space: nowrap;
+        }
+        .deal-profit__value {
+            flex: 0 0 42%;
+            text-align: right;
+            display: inline-flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+    }
+    .vehicle-profit__button {
+        margin: 20px 0;
+        width: 100%;
+    }
+    .vehicle-profit__trade.profit-trade {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        .profit-trade__title {
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            padding-bottom: 4px;
+            margin-top: 20px;
+        }
+        .profit-trade__input {
+            width: 49%;
+        }
+    }
+    .profit-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding-top: 4px;
+        padding-bottom: 0;
+
+        .splitter {
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+    }
+    .vehicle-profit__button {
+        background-color: var(--vehicle-profit-accent-color);
+        color: var(--admss-app-white);
+        border-color: var(--vehicle-profit-accent-color);
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+        &:hover {
+            background-color: var(--vehicle-profit-button-color);
+            color: var(--admss-app-white);
+        }
+    }
+}
+
+.profit-commission {
+    .deal-profit__includes::before {
+        background-color: var(--commission-color);
+    }
+    box-shadow: 0 0 3px 0 var(--commission-accent-color);
+    position: relative;
+    .profit-commission__salesman-button {
+        width: 100%;
+        text-transform: uppercase;
+        background-color: var(--commission-accent-color);
+        border-color: var(--commission-accent-color);
+        font-weight: 700;
+        font-size: 18px;
+        &:hover {
+            background-color: var(--commission-button-color);
+            border-color: var(--commission-accent-color);
+            color: var(--admss-app-white);
+        }
+    }
+
+    .profit-commission__worksheet {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+
+        .p-button {
+            margin-bottom: 20px;
+        }
+
+        .splitter__line {
+            border-color: var(--commission-accent-color);
+            margin-top: 6px;
+            margin-bottom: 6px;
+        }
+
+        .deal-profit__item {
+            padding-top: 8px;
+            margin-top: 5.5px;
+
+            &:nth-child(2) {
+                .deal-profit__label {
+                    padding-left: 24px;
+                    white-space: nowrap;
+                    flex: 0 0 34%;
+                }
+
+                .deal-profit__includes::before {
+                    content: "A B";
+                    padding: 10px 0;
+                    color: var(--commission-accent-color);
+                    width: 100%;
+                    text-align: center;
+                    letter-spacing: 0.2rem;
+                    height: 70%;
+                    border-radius: 6px 6px 0 0;
+                }
+            }
+            &:last-child {
+                padding-top: 0;
+                margin-top: 0;
+                .deal-profit__includes::before {
+                    padding-bottom: 10px;
+                    border-radius: 0 0 6px 6px;
+                }
+            }
+        }
+    }
+    .profit-commission__header {
+        display: flex;
+        overflow: hidden;
+        justify-content: space-between;
+        align-items: center;
+        gap: 4px;
+        color: var(--commission-accent-color);
+        background-color: var(--commission-color);
+        padding: 8px 20px;
+        white-space: nowrap;
+        font-weight: 600;
+    }
+
+    .profit-commission__body.profit-card__body {
+        font-size: 16px;
+        display: flex;
+        gap: 10px;
+        padding-bottom: 24px;
+
+        .deal-profit__summary {
+            padding-left: 20px;
+            .deal-profit__label {
+                white-space: nowrap;
+            }
+            .deal-profit__value {
+                flex: 0 0 23%;
+            }
+        }
+
+        .deal-profit__label {
+            padding-left: 5px;
+            flex: 0 0 44%;
+        }
+
+        .deal-profit__value {
+            flex: 0 0 34%;
+            text-align: right;
+            display: inline-flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .currency-item__input {
+            flex: 0 0 120px;
+        }
+
+        .commission-settings {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            .commission-settings__title {
+                padding-bottom: 6px;
+            }
+
+            .commission-settings__radio {
+                width: 100%;
+                .radio__item {
+                    width: 48%;
+                }
+            }
+            .commission-settings__checkbox {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                width: 48%;
+            }
+        }
+    }
+}
+
+.profit-finance {
+    box-shadow: 0 0 3px 0 var(--finance-accent-color);
+
+    .profit-finance__header {
+        background-color: var(--finance-color);
+        color: var(--finance-accent-color);
+    }
+
+    .splitter__line {
+        border-color: var(--finance-accent-color);
+    }
+
+    .deal-profit__includes::before {
+        background-color: var(--finance-color);
+    }
+
+    .finance-worksheet {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 0px;
+        .finance-profit__info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 0 0 40%;
+        }
+        .finance-profit__inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 0 0 55%;
+        }
+    }
+
+    .finance-loan {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 0 0 40%;
+
+        .deal-profit__item:last-child {
+            .deal-profit__label {
+                flex: 0 0 calc(40% - 65px);
+            }
+        }
+
+        .deal-profit__additional-value {
+            font-size: 14px;
+            font-weight: 400;
+            flex: 0 0 65px;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .deal-profit__label {
+            flex: 0 0 40%;
+            white-space: nowrap;
+        }
+
+        .deal-profit__value {
+            flex: 0 0 55%;
+        }
+
+        .deal-profit__currency-select {
+            margin-left: 0;
+        }
+
+        .deal-profit__includes {
+            &::before {
+                color: var(--finance-accent-color);
+            }
+        }
+
+        .currency-item__input {
+            flex: 0 0 160px;
+        }
+
+        .profit-card__body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-bottom: 50px;
+        }
+    }
+
+    .vertical-splitter {
+        height: 246px;
+        width: 1px;
+        background-color: var(--finance-color);
+    }
+}
+
+.deal-interest-profit {
+    box-shadow: 0 0 3px 0 var(--interest-accent-color);
+    padding: 0;
+    .profit-card__header.deal-interest-profit__header {
+        background-color: var(--interest-color);
+        color: var(--interest-accent-color);
+    }
+
+    .splitter__line {
+        border-color: var(--interest-accent-color);
+    }
+
+    .deal-interest-profit__body.profit-card__body {
+        display: flex;
+        justify-content: space-between;
+        padding-bottom: 24px;
+
+        .deal-profit__item {
+            .deal-profit__label {
+                white-space: nowrap;
+            }
+            .deal-profit__value {
+                flex: 1;
+                justify-content: flex-end;
+                padding-right: 15px;
+            }
+            .deal-profit__includes::before {
+                background-color: var(--interest-color);
+            }
+            &:first-child .deal-profit__includes::before {
+                height: 80%;
+                color: var(--interest-accent-color);
+            }
+            &:last-child .deal-profit__includes::before {
+                height: 90%;
+            }
+        }
+
+        .interest-controls {
+            padding-top: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 0 0 48%;
+            .deal-profit__label {
+                width: 160px;
+            }
+        }
+
+        .interest-results {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 10px;
+            flex: 0 0 48%;
+            .deal-profit__label {
+                width: 160px;
+            }
+        }
+    }
+
+    .vertical-splitter {
+        height: 246px;
+        width: 1px;
+        background-color: var(--interest-color);
+    }
+}
+
+.totals-profit {
+    box-shadow: 0 0 3px 0 var(--totals-text-color);
+    background-color: var(--totals-color);
+    font-weight: 600;
+    .totals-profit__header {
+        background-color: var(--totals-accent-color);
+        text-transform: uppercase;
+        color: var(--totals-text-color);
+    }
+
+    .splitter__line {
+        border-color: var(--totals-text-color);
+    }
+
+    .totals-profit__body {
+        display: flex;
+    }
+
+    &.profit-card .profit-card__body {
+        padding-bottom: 0;
+    }
+
+    .totals-info {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        width: 100%;
+
+        flex: 0 0 29%;
+
+        .totals-info__item {
+            display: flex;
+            flex-direction: column;
+            border-width: 1px;
+            border-style: solid;
+            border-radius: 10px;
+            padding: 10px 15px;
+            height: 81px;
+            justify-content: space-between;
+            .totals-info__title,
+            .totals-info__value {
+                font-weight: 700;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+
+            .totals-info__value {
+                margin-left: auto;
+                padding-right: 5%;
+            }
+            &.totals-info__item--vehicle {
+                border-color: var(--vehicle-profit-accent-color);
+                color: var(--vehicle-profit-accent-color);
+                background-color: var(--vehicle-profit-color);
+            }
+            &.totals-info__item--finance {
+                border-color: var(--finance-accent-color);
+                color: var(--finance-accent-color);
+                background-color: var(--finance-color);
+            }
+            &.totals-info__item--commission {
+                border-color: var(--commission-accent-color);
+                color: var(--commission-accent-color);
+                background-color: var(--commission-color);
+            }
+        }
+    }
+
+    .totals-controls {
+        --padding-left: 36px;
+        padding-left: 20px;
+        padding-top: 12px;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        font-size: 14px;
+        .currency-item__input {
+            align-items: center;
+        }
+
+        .totals-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            height: 32px;
+            gap: 10px;
+            font-family: "Open Sans", sans-serif;
+            margin-bottom: 10px;
+
+            .deal-profit__includes {
+                position: relative;
+                margin-left: auto;
+                display: flex;
+                justify-content: space-between;
+
+                &::before {
+                    background-color: var(--totals-accent-color);
+                    color: var(--totals-text-color);
+                }
+
+                &:last-child::before {
+                    height: 90%;
+                }
+            }
+        }
+
+        .totals-misc {
+            .p-float-label label {
+                margin-top: -0.4rem;
+                overflow: visible;
+            }
+
+            .p-inputtext:focus + label,
+            .p-inputtext.p-filled + label {
+                margin-top: -0.5rem;
+                font-size: 8px;
+            }
+        }
+
+        .totals-misc__input,
+        .totals-info__title,
+        .totals-info__input {
+            font-size: 14px;
+            height: 32px;
+            max-width: 140px;
+            flex: 1 1 140px;
+            display: flex;
+            align-items: center;
+        }
+
+        .totals-info__title {
+            display: flex;
+            align-items: center;
+            flex: 0 0 140px;
+        }
+
+        .totals-info__value {
+            padding-left: var(--padding-left);
+            &:not(.totals-summary) {
+                font-weight: 400;
+            }
+        }
+
+        .currency-item {
+            .p-inputtext {
+                max-width: 110px;
+                font-size: 14px;
+                flex: 1 1 110px;
+            }
+        }
+        .p-inputtext,
+        .currency-item__icon {
+            height: 32px;
+        }
+        .currency-item__icon {
+            line-height: 0;
+            width: 30px;
+        }
+
+        .totals-summary {
+            color: var(--totals-text-color);
+            font-weight: 700;
+            font-size: 16px;
+            display: inline-flex;
+            .totals-summary__title {
+                white-space: nowrap;
+                flex: 0 0 140px;
+            }
+            .totals-summary__value {
+                margin-left: var(--padding-left);
+            }
+        }
+    }
+}

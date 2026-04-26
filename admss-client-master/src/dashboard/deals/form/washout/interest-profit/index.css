@@ -1,0 +1,106 @@
+.interest-profit {
+    --account-wash-color: var(--admss-app-light-lavender);
+    --account-wash-accent-color: var(--admss-app-lavender);
+
+    --interest-color: var(--admss-app-light-green);
+    --interest-accent-color: var(--admss-app-deep-green);
+
+    display: flex;
+    gap: 30px;
+
+    .interest-income {
+        width: 438px;
+    }
+
+    .account-wash {
+        width: 508px;
+    }
+
+    .profit-card {
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .profit-card__header {
+        height: 50px;
+        background-color: var(--admss-app-focus-blue);
+        padding: 0;
+        padding-left: 24px;
+        display: flex;
+        overflow: hidden;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .account-wash__body,
+    .interest-income__body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .deal-profit__item {
+        height: 32px;
+        font-family: "Open Sans", sans-serif;
+        &:not(.deal-profit__item--bold) {
+            font-weight: 600;
+        }
+        .p-inputtext {
+            height: 32px;
+        }
+
+        .p-inputtext:focus {
+            box-shadow: none;
+        }
+
+        .input-icon {
+            height: 32px;
+            width: 32px;
+        }
+
+        .deal-profit__label {
+            width: 230px;
+        }
+
+        .deal-profit__value {
+            :has(.deal-profit__item--bold) {
+                font-weight: 600;
+            }
+            margin-left: 60px;
+
+            display: inline-flex;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+    }
+
+    .account-wash {
+        &.profit-card {
+            box-shadow: 0 0 3px 0 var(--account-wash-accent-color);
+
+            .profit-card__header {
+                background-color: var(--account-wash-color);
+                color: var(--account-wash-accent-color);
+            }
+        }
+        .deal-profit__label {
+            white-space: nowrap;
+            width: 292px;
+        }
+
+        .deal-profit__value {
+            margin-left: 70px;
+        }
+    }
+    .interest-income {
+        &.profit-card {
+            box-shadow: 0 0 3px 0 var(--interest-accent-color);
+
+            .profit-card__header {
+                background-color: var(--interest-color);
+                color: var(--interest-accent-color);
+            }
+        }
+    }
+}

@@ -1,0 +1,64 @@
+.vin-decoder {
+    display: flex;
+    width: 100%;
+}
+
+.vin-decoder__text-input {
+    flex: 1;
+    border-radius: 4px 0 0 4px;
+}
+
+.vin-decoder__decode-button {
+    flex: 0 1 152px;
+    border-radius: 0 4px 4px 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    font-size: 18px;
+    font-weight: 700;
+    &.vin-decoder__decode-button--loading {
+        flex-direction: row-reverse;
+        .loader-wrapper {
+            padding-left: 10px;
+            flex: 0 0 20%;
+        }
+    }
+}
+
+.vin-decoder__wrapper {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.vin-decoder__wrapper .p-error {
+    --line-height: 8px;
+    position: absolute;
+    display: inline-block;
+    left: 2px;
+    z-index: 1;
+    max-width: calc(100% - 4px);
+    bottom: -6px;
+}
+
+.vin-decoder__wrapper .p-error small {
+    font-size: 12px;
+}
+
+.vin-decoder__wrapper .p-error::before {
+    content: "";
+    z-index: -1;
+    position: absolute;
+    top: var(--line-height);
+    left: 0;
+    width: 100%;
+    height: var(--line-height);
+    background-color: var(--admss-app-white);
+}
+
+@media (max-width: 1780px) {
+    .vin-decoder__wrapper .p-error {
+        max-width: calc(100% - 20px);
+    }
+}

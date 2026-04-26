@@ -1,0 +1,163 @@
+import { convertToStandardTimestamp, formatDateForServer, fromBinary } from "common/helpers";
+import { useToastMessage } from "common/hooks";
+import { BaseResponseError, Status } from "common/models/base-response";
+import { ReportDocument, ReportSetParams } from "common/models/reports";
+import { DateInput } from "dashboard/common/form/inputs";
+import { setReportDocumentTemplate } from "http/services/reports.service";
+import { Button } from "primereact/button";
+import { ReactElement, useEffect, useState } from "react";
+
+interface ReportParametersProps {
+    report: ReportDocument;
+    handleClosePanel?: () => void;
+}
+
+export enum DIALOG_ACTION {
+    PREVIEW = "preview",
+    DOWNLOAD = "download",
+}
+
+interface reportDownloadFormParams extends Partial<Omit<ReportSetParams, "from_date" | "to_date">> {
+    action: DIALOG_ACTION;
+    from_date?: number | Date;
+    to_date?: number | Date;
+}
+
+export const reportDownloadForm = async (
+    params: reportDownloadFormParams,
+    withDate: boolean = false
+): Promise<BaseResponseError | undefined> => {
+    const payload: ReportSetParams = {
+        itemUID: params.itemUID || "0",
+        timestamp_s: formatDateForServer(new Date(), true),
+        columns: params.columns,
+    };
+
+    if (withDate) {
+        payload.from_date = params.from_date
+            ? convertToStandardTimestamp(params.from_date)
+            : convertToStandardTimestamp();
+
+        if (!!params.AskForStartAndEndDates) {
+            payload.to_date = params.to_date
+                ? convertToStandardTimestamp(params.to_date)
+                : convertToStandardTimestamp();
+        }
+    }
+
+    const response = await setReportDocumentTemplate(params.itemUID || "0", payload);
+
+    if (!response || response.status === Status.ERROR) {
+        return response;
+    }
+
+    const url = new Blob([response], { type: "application/pdf" });
+    let link = document.createElement("a");
+    link.href = window.URL.createObjectURL(url);
+    if (params.action === DIALOG_ACTION.DOWNLOAD) {
+        link.download = `report_form_${params.name}.pdf`;
+        link.click();
+    } else {
+        window.open(
+            link.href,
+            "_blank",
+            "toolbar=yes,scrollbars=yes,resizable=yes,top=100,left=100,width=1280,height=720"
+        );
+    }
+};
+
+export const ReportParameters = ({
+    report,
+    handleClosePanel,
+}: ReportParametersProps): ReactElement => {
+    const { showError } = useToastMessage();
+    const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(false);
+    const [startDate, setStartDate] = useState<string | number>("");
+    const [endDate, setEndDate] = useState<string | number>("");
+
+    useEffect(() => {
+        if (!startDate || (fromBinary(report.AskForStartAndEndDates) && !endDate)) {
+            setIsButtonDisabled(true);
+        } else {
+            setIsButtonDisabled(false);
+        }
+    }, [startDate, endDate, report.AskForStartAndEndDates]);
+
+    const handleCloseClick = () => {
+        handleClosePanel?.();
+    };
+
+    const handleDownloadForm = async (download: boolean = false) => {
+        const basePayload = {
+            action: download ? DIALOG_ACTION.DOWNLOAD : DIALOG_ACTION.PREVIEW,
+            from_date: startDate ? new Date(Number(startDate)) : convertToStandardTimestamp(),
+            ...report,
+        };
+
+        const payload =
+            fromBinary(report.AskForStartAndEndDates) && endDate
+                ? {
+                      ...basePayload,
+                      to_date: new Date(Number(endDate)),
+                  }
+                : basePayload;
+
+        const response = await reportDownloadForm(payload, true);
+        if (response && response.status === Status.ERROR) {
+            showError(response.error || "Error while downloading report");
+        }
+    };
+
+    return (
+        <div className='report-parameters'>
+            <h3 className='report-parameters__title'>Parameters</h3>
+            {handleClosePanel && (
+                <Button
+                    icon='pi pi-times'
+                    className='p-button close-button'
+                    onClick={handleCloseClick}
+                />
+            )}
+            <div className='grid report-parameters__form mt-3'>
+                <DateInput
+                    name='Start Date'
+                    colWidth={3}
+                    date={startDate}
+                    emptyDate
+                    onChange={({ value }) => setStartDate(Number(value))}
+                />
+                {fromBinary(report.AskForStartAndEndDates) && (
+                    <DateInput
+                        name='End Date'
+                        colWidth={3}
+                        date={endDate}
+                        emptyDate
+                        onChange={({ value }) => setEndDate(Number(value))}
+                    />
+                )}
+                <div className='col-12 flex justify-content-end gap-3'>
+                    <Button
+                        className='edit-collection__button'
+                        disabled={isButtonDisabled}
+                        severity={isButtonDisabled ? "secondary" : "success"}
+                        type='button'
+                        outlined
+                        onClick={() => handleDownloadForm()}
+                    >
+                        Preview
+                    </Button>
+                    <Button
+                        className='edit-collection__button'
+                        disabled={isButtonDisabled}
+                        severity={isButtonDisabled ? "secondary" : "success"}
+                        type='button'
+                        outlined
+                        onClick={() => handleDownloadForm(true)}
+                    >
+                        Download
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};

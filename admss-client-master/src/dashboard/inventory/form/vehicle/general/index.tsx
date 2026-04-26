@@ -1,0 +1,687 @@
+import "./index.css";
+import { ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import {
+    deleteInventoryMake,
+    deleteInventoryModel,
+    getAutoMakeModelList,
+    getInventoryAutomakesList,
+    getInventoryExteriorColorsList,
+    getInventoryInteriorColorsList,
+    getInventoryLocations,
+} from "http/services/inventory-service";
+
+import { useFormikContext } from "formik";
+import { useStore } from "store/hooks";
+import { observer } from "mobx-react-lite";
+import { VehicleDecodeInfo } from "http/services/vin-decoder.service";
+import { Checkbox } from "primereact/checkbox";
+import { Audit, Inventory, InventoryLocations, MakesListData } from "common/models/inventory";
+import { TextInput, NumberInput } from "dashboard/common/form/inputs";
+
+import defaultMakesLogo from "assets/images/default-makes-logo.svg";
+import { VINDecoder } from "dashboard/common/form/vin-decoder";
+import { Button } from "primereact/button";
+import { AutoComplete } from "primereact/autocomplete";
+import { ListData } from "common/models";
+import { ComboBox } from "dashboard/common/form/dropdown";
+import { useToast } from "dashboard/common/toast";
+import { UserGroup } from "common/models/user";
+import { DropdownChangeEvent } from "primereact/dropdown";
+
+const EQUIPMENT = "equipment";
+const DEFAULT_LOCATION = "default";
+
+const parseMileage = (mileage: string): number => {
+    return parseFloat(mileage.replace(/,/g, ""));
+};
+
+const renderedAuditKeys: (keyof Audit)[] = [
+    "JustArrived",
+    "NeedsCleaning",
+    "DataNeedsUpdate",
+    "ReadyForSale",
+];
+
+export const VehicleGeneral = observer((): ReactElement => {
+    const store = useStore().inventoryStore;
+    const userStore = useStore().userStore;
+    const toast = useToast();
+    const { authUser } = userStore;
+    const {
+        inventory,
+        currentLocation,
+        changeInventory,
+        inventoryAudit,
+        changeInventoryAudit,
+        inventoryGroupClassList,
+    } = store;
+    const { values, errors, setFieldValue, getFieldProps, validateField, setFieldTouched } =
+        useFormikContext<Inventory>();
+
+    const [initialAutoMakesList, setInitialAutoMakesList] = useState<MakesListData[]>([]);
+    const [automakesList, setAutomakesList] = useState<MakesListData[]>([]);
+    const [automakesModelList, setAutomakesModelList] = useState<ListData[]>([]);
+    const [colorList, setColorList] = useState<ListData[]>([]);
+    const [interiorList, setInteriorList] = useState<ListData[]>([]);
+    const [locationList, setLocationList] = useState<InventoryLocations[]>([]);
+    const [allowOverwrite, setAllowOverwrite] = useState<boolean>(false);
+    const [selectedAuditKey, setSelectedAuditKey] = useState<keyof Audit | null>(null);
+    const [isGroupClassFocused, setIsGroupClassFocused] = useState<boolean>(false);
+    const [activeGroupClassList, setActiveGroupClassList] = useState<UserGroup[]>([]);
+
+    const groupClassId = useMemo<string>(() => {
+        return (
+            inventory.GroupClassId ||
+            activeGroupClassList.find((group) => {
+                return group.description === inventory.GroupClassName;
+            })?.itemuid ||
+            ""
+        );
+    }, [inventory.GroupClassId, activeGroupClassList, inventory.GroupClassName]);
+
+    const handleGetAutoMakeModelList = async () => {
+        const response = await getInventoryAutomakesList();
+        if (response && Array.isArray(response)) {
+            const upperCasedList = response.map((item) => ({
+                ...item,
+                name: item.name.toUpperCase(),
+            }));
+            setInitialAutoMakesList(upperCasedList);
+            setAutomakesList(upperCasedList);
+        }
+    };
+
+    const handleGetColorsList = async () => {
+        const [exteriorColorsResponse, interiorColorsResponse] = await Promise.all([
+            getInventoryExteriorColorsList(),
+            getInventoryInteriorColorsList(),
+        ]);
+        if (exteriorColorsResponse && Array.isArray(exteriorColorsResponse)) {
+            setColorList(exteriorColorsResponse);
+        }
+        if (interiorColorsResponse && Array.isArray(interiorColorsResponse)) {
+            setInteriorList(interiorColorsResponse);
+        }
+    };
+
+    const handleGetLocationsList = async () => {
+        if (!authUser) return;
+        const response = await getInventoryLocations(authUser.useruid);
+        if (response && Array.isArray(response)) {
+            setLocationList(response);
+        }
+    };
+
+    const handleGetUserGroupsList = async () => {
+        const activeUserGroups = inventoryGroupClassList.filter(
+            (group) =>
+                (group.enabled === 1 && Boolean(group.itemuid)) ||
+                (inventory.GroupClassName && group.description === inventory.GroupClassName)
+        );
+
+        setActiveGroupClassList(activeUserGroups);
+    };
+
+    useEffect(() => {
+        handleGetAutoMakeModelList();
+        handleGetColorsList();
+        handleGetLocationsList();
+        store.getInventoryGroupClassList();
+    }, []);
+
+    useEffect(() => {
+        if (inventory.GroupClassName) {
+            handleGetUserGroupsList();
+            handleGetInventoryGroupFullInfo(inventory.GroupClassName);
+        }
+    }, [inventory.GroupClassName]);
+
+    useEffect(() => {
+        if (inventoryGroupClassList.length > 0) {
+            handleGetUserGroupsList();
+        }
+    }, [inventoryGroupClassList]);
+
+    const handleGetInventoryGroupFullInfo = (groupName: string) => {
+        if (groupName) {
+            const activeGroup = inventoryGroupClassList.find(
+                (group) => group.description === groupName
+            );
+
+            if (activeGroup) {
+                store.inventoryGroupID = activeGroup.itemuid;
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (!values?.locationuid?.trim() && !!locationList.length) {
+            const defaultLocation = locationList.find(
+                (location) => location.locName.toLowerCase() === DEFAULT_LOCATION
+            );
+            store.currentLocation = defaultLocation?.locationuid || locationList[0]?.locationuid;
+        }
+    }, [currentLocation, locationList, values.locationuid, store]);
+
+    const handleSelectMake = useCallback(async () => {
+        const makeSting = inventory.Make.toLowerCase();
+        if (automakesList.some((item) => item.name.toLocaleLowerCase() === makeSting)) {
+            const list = await getAutoMakeModelList(makeSting.replaceAll(" ", "_"));
+            if (list && Array.isArray(list) && list.length) {
+                setAutomakesModelList(list);
+            } else {
+                setAutomakesModelList([]);
+            }
+        } else {
+            setAutomakesModelList([]);
+        }
+    }, [automakesList, inventory.Make]);
+
+    useEffect(() => {
+        if (inventory.Make) handleSelectMake();
+    }, [handleSelectMake, inventory.Make]);
+
+    const selectedAutoMakesTemplate = (option: MakesListData) => {
+        return (
+            <div className='flex align-items-center'>
+                <img
+                    alt={option.name}
+                    src={option?.logo || defaultMakesLogo}
+                    className='mr-2 vehicle-general__dropdown-icon'
+                />
+                <div>{option.name}</div>
+            </div>
+        );
+    };
+
+    const handleDeleteInventoryRecord = (record: MakesListData, isModel: boolean = false) => {
+        const handleDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
+            event.stopPropagation();
+
+            if (!record.itemuid) return;
+            if (record.isdefault) {
+                toast?.current?.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "You cannot delete a default make.",
+                });
+                return;
+            }
+
+            let response;
+            if (isModel) {
+                response = await deleteInventoryModel(record.itemuid);
+            } else {
+                response = await deleteInventoryMake(record.itemuid);
+            }
+
+            if (response?.error) {
+                toast?.current?.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: response.error,
+                });
+            } else {
+                toast?.current?.show({
+                    severity: "success",
+                    summary: "Success",
+                    detail: `${isModel ? "Model" : "Make"} ${record.name} deleted successfully`,
+                });
+                handleGetAutoMakeModelList();
+            }
+        };
+
+        return (
+            <div className='flex align-items-center inventory-makes'>
+                {!isModel && (
+                    <img
+                        alt={record.name}
+                        src={record?.logo || defaultMakesLogo}
+                        className='mr-2 vehicle-general__dropdown-icon'
+                    />
+                )}
+                <div className='inventory-makes__name'>{record.name}</div>
+                {!record.isdefault && (
+                    <Button
+                        icon='pi pi-times'
+                        className='p-button-text inventory-makes__delete-button'
+                        onClick={handleDelete}
+                    />
+                )}
+            </div>
+        );
+    };
+
+    const handleVINchange = (vinInfo: VehicleDecodeInfo) => {
+        if (vinInfo && inventory.GroupClassName !== EQUIPMENT) {
+            if (allowOverwrite) {
+                changeInventory({ key: "Make", value: vinInfo.Make || values.Make });
+                changeInventory({ key: "Model", value: vinInfo.Model || values.Model });
+                changeInventory({ key: "Year", value: vinInfo.Year || values.Year });
+                changeInventory({
+                    key: "GroupClassName",
+                    value: vinInfo.GroupClassName || values.GroupClassName,
+                });
+                changeInventory({
+                    key: "Transmission_id",
+                    value: vinInfo.Transmission_id || values.Transmission_id,
+                });
+                changeInventory({
+                    key: "TypeOfFuel_id",
+                    value: vinInfo.TypeOfFuel_id || values.TypeOfFuel_id,
+                });
+                changeInventory({
+                    key: "DriveLine_id",
+                    value: vinInfo.DriveLine_id || values.DriveLine_id,
+                });
+                changeInventory({
+                    key: "Cylinders_id",
+                    value: vinInfo.Cylinders_id || values.Cylinders_id,
+                });
+                changeInventory({ key: "Engine_id", value: vinInfo.Engine_id || values.Engine_id });
+                changeInventory({ key: "StockNo", value: vinInfo.StockNo || values.StockNo });
+                changeInventory({ key: "Trim", value: vinInfo.Trim || values.Trim });
+                changeInventory({
+                    key: "BodyStyle_id",
+                    value: vinInfo.BodyStyle_id || values.BodyStyle_id,
+                });
+                changeInventory({
+                    key: "InteriorColor",
+                    value: vinInfo.InteriorColor || values.InteriorColor,
+                });
+                changeInventory({
+                    key: "ExteriorColor",
+                    value: vinInfo.ExteriorColor || values.ExteriorColor,
+                });
+                changeInventory({ key: "mileage", value: vinInfo.mileage || values.mileage });
+            } else {
+                changeInventory({ key: "Make", value: inventory.Make || vinInfo.Make });
+                changeInventory({ key: "Model", value: inventory.Model || vinInfo.Model });
+                changeInventory({ key: "Year", value: inventory.Year || vinInfo.Year });
+                changeInventory({
+                    key: "GroupClassName",
+                    value: inventory.GroupClassName || vinInfo.GroupClassName,
+                });
+                changeInventory({
+                    key: "Transmission_id",
+                    value: inventory.Transmission_id || vinInfo.Transmission_id,
+                });
+                changeInventory({
+                    key: "TypeOfFuel_id",
+                    value: inventory.TypeOfFuel_id || vinInfo.TypeOfFuel_id,
+                });
+                changeInventory({
+                    key: "DriveLine_id",
+                    value: inventory.DriveLine_id || vinInfo.DriveLine_id,
+                });
+                changeInventory({
+                    key: "Cylinders_id",
+                    value: inventory.Cylinders_id || vinInfo.Cylinders_id,
+                });
+                changeInventory({
+                    key: "Engine_id",
+                    value: inventory.Engine_id || vinInfo.Engine_id,
+                });
+                changeInventory({ key: "StockNo", value: inventory.StockNo || vinInfo.StockNo });
+                changeInventory({ key: "Trim", value: inventory.Trim || vinInfo.Trim });
+                changeInventory({
+                    key: "BodyStyle_id",
+                    value: inventory.BodyStyle_id || vinInfo.BodyStyle_id,
+                });
+                changeInventory({
+                    key: "InteriorColor",
+                    value: inventory.InteriorColor || vinInfo.InteriorColor,
+                });
+                changeInventory({
+                    key: "ExteriorColor",
+                    value: inventory.ExteriorColor || vinInfo.ExteriorColor,
+                });
+                changeInventory({ key: "mileage", value: inventory.mileage || vinInfo.mileage });
+            }
+            handleGetInventoryGroupFullInfo(vinInfo.GroupClassName || values.GroupClassName);
+        }
+    };
+
+    useEffect(() => {
+        const activeKey = renderedAuditKeys.find((key) => inventoryAudit[key] === 1) || null;
+        setSelectedAuditKey(activeKey);
+    }, [inventoryAudit]);
+
+    const auditOptions = renderedAuditKeys.map((key) => ({
+        label: key.replace(/(?!^)([A-Z]|\d+)/g, " $1"),
+        value: key,
+    }));
+
+    const handleAuditChange = (value: keyof Audit) => {
+        changeInventoryAudit(value);
+
+        renderedAuditKeys.forEach((key) => {
+            if (key !== value) {
+                const auditValue = inventoryAudit[key] as number;
+                if (auditValue === 1) {
+                    changeInventoryAudit(key);
+                }
+            }
+        });
+
+        setSelectedAuditKey(value);
+    };
+
+    const handleGroupClassChange = ({ value }: DropdownChangeEvent) => {
+        try {
+            changeInventory({ key: "GroupClassId", value });
+            const group = activeGroupClassList.find((group) => group.itemuid === value) || null;
+            if (group && group.description) {
+                const { description: value } = group;
+                changeInventory({ key: "GroupClass", value });
+                changeInventory({ key: "GroupClassName", value });
+            }
+        } finally {
+            setIsGroupClassFocused(false);
+            handleGetInventoryGroupFullInfo(value);
+        }
+    };
+
+    return (
+        <div className='grid vehicle-general row-gap-2'>
+            <div className='col-6 relative'>
+                <ComboBox
+                    optionLabel='locName'
+                    optionValue='locationuid'
+                    options={locationList}
+                    value={values.locationuid}
+                    onChange={({ value }) => {
+                        setFieldValue("locationuid", value || locationList[0].locationuid);
+                        changeInventory({
+                            key: "locationuid",
+                            value: value || locationList[0].locationuid,
+                        });
+                    }}
+                    required
+                    className={`w-full vehicle-general__dropdown ${
+                        inventory.locationuid === "" && "p-inputwrapper-filled"
+                    }`}
+                    label='Location name (required)'
+                    error={!!errors.locationuid}
+                    errorMessage={errors.locationuid}
+                />
+            </div>
+            <div className='col-3 relative'>
+                <ComboBox
+                    optionLabel='description'
+                    optionValue='itemuid'
+                    options={activeGroupClassList}
+                    value={groupClassId}
+                    required
+                    onChange={handleGroupClassChange}
+                    onFocus={() => setIsGroupClassFocused(true)}
+                    onBlur={() => setIsGroupClassFocused(false)}
+                    className='w-full vehicle-general__dropdown'
+                    label={`Inventory group (${!inventory.GroupClassName && !isGroupClassFocused ? "req." : "required"})`}
+                    error={!!errors.GroupClassName}
+                    errorMessage={errors.GroupClassName}
+                />
+            </div>
+
+            <div className='col-12'>
+                <hr className='form-line' />
+            </div>
+            {inventory.GroupClassName === EQUIPMENT ? (
+                <div className='col-6 relative'>
+                    <TextInput
+                        name='VIN'
+                        label='VIN (required)'
+                        value={values.VIN}
+                        onChange={({ target: { value } }) => {
+                            setFieldValue("VIN", value);
+                            changeInventory({ key: "VIN", value });
+                        }}
+                        className='w-full'
+                        error={!!errors.VIN}
+                        errorMessage={errors.VIN}
+                    />
+                </div>
+            ) : (
+                <>
+                    <div className='col-12'>
+                        <div className='vehicle-general-overwrite pb-3'>
+                            <Checkbox
+                                checked={allowOverwrite}
+                                inputId='vehicle-general-overwrite'
+                                className='vehicle-general-overwrite__checkbox'
+                                onChange={() => setAllowOverwrite(!allowOverwrite)}
+                            />
+                            <label
+                                htmlFor='vehicle-general-overwrite'
+                                className='pl-3 vehicle-general-overwrite__label'
+                            >
+                                Overwrite data
+                            </label>
+                            <Button
+                                text
+                                tooltip='Data received from the VIN decoder service will overwrite user-entered data.'
+                                icon='icon adms-help'
+                                type='button'
+                                severity='info'
+                                className='vehicle-general-overwrite__icon transparent'
+                            />
+                        </div>
+                    </div>
+
+                    <div className='col-6 relative'>
+                        <VINDecoder
+                            value={values.VIN}
+                            onChange={async ({ target: { value } }) => {
+                                await setFieldValue("VIN", value);
+                                await setFieldTouched("VIN", true, false);
+                                changeInventory({ key: "VIN", value });
+                                validateField("VIN");
+                            }}
+                            onAction={handleVINchange}
+                            disabled={inventory.GroupClassName === "equipment"}
+                            className='w-full'
+                            error={!!errors.VIN}
+                            errorMessage={errors.VIN as string}
+                        />
+                    </div>
+                </>
+            )}
+
+            <div className='col-6 relative'>
+                <TextInput
+                    name='StockNo'
+                    label='Stock#'
+                    className='vehicle-general__text-input w-full'
+                    value={values.StockNo}
+                    error={!!errors.StockNo}
+                    errorMessage={errors.StockNo}
+                    onChange={async ({ target: { value } }) => {
+                        await setFieldValue("StockNo", value);
+                        await setFieldTouched("StockNo", true, false);
+                        changeInventory({ key: "StockNo", value });
+                        validateField("StockNo");
+                    }}
+                    onInput={(event: React.FormEvent<HTMLInputElement>) => {
+                        const value = (event.target as HTMLInputElement).value;
+                        if (!value) {
+                            return changeInventory({ key: "StockNo", value: "" });
+                        }
+                        setFieldValue("StockNo", value);
+                        changeInventory({ key: "StockNo", value });
+                    }}
+                />
+            </div>
+            <div className='col-6 relative'>
+                <span
+                    className={`p-float-label input-error-wrapper relative ${
+                        errors.Make ? "p-invalid" : ""
+                    }`}
+                >
+                    <AutoComplete
+                        {...getFieldProps("Make")}
+                        value={values.Make}
+                        suggestions={automakesList}
+                        completeMethod={({ query }) => {
+                            setAutomakesList(
+                                initialAutoMakesList.filter((item) =>
+                                    item.name.includes(query.toUpperCase())
+                                )
+                            );
+                        }}
+                        dropdown
+                        onChange={({ value }) => {
+                            let make = typeof value === "string" ? value : value.name;
+
+                            if (make.trim()) {
+                                const normalizedInput = make.trim();
+                                const matchingMake = initialAutoMakesList.find(
+                                    (item) =>
+                                        item.name.toLowerCase() === normalizedInput.toLowerCase()
+                                );
+                                if (matchingMake) {
+                                    make = matchingMake.name;
+                                }
+                            }
+
+                            setFieldValue("Make", make);
+                            changeInventory({ key: "Make", value: make });
+                        }}
+                        itemTemplate={(option) => handleDeleteInventoryRecord(option)}
+                        selectedItemTemplate={selectedAutoMakesTemplate}
+                        placeholder='Make (required)'
+                        className={`vehicle-general__dropdown w-full ${
+                            errors.Make ? "p-invalid" : ""
+                        }`}
+                        panelClassName='vehicle-general__panel'
+                    />
+                    <label className='float-label'>Make (required)</label>
+                    {errors.Make && (
+                        <div className='p-error'>
+                            <small>{errors.Make}</small>
+                        </div>
+                    )}
+                </span>
+            </div>
+
+            <div className='col-6 relative'>
+                <ComboBox
+                    {...getFieldProps("Model")}
+                    optionLabel='name'
+                    optionValue='name'
+                    value={values.Model}
+                    editable
+                    options={automakesModelList}
+                    required
+                    onChange={({ value }) => {
+                        let model = value;
+
+                        if (model && model.trim() && !!automakesModelList.length) {
+                            const normalizedInput = model.trim();
+                            const matchingModel = automakesModelList.find(
+                                (item) => item.name.toLowerCase() === normalizedInput.toLowerCase()
+                            );
+                            if (matchingModel) {
+                                model = matchingModel.name;
+                            }
+                        }
+
+                        setFieldValue("Model", model);
+                        changeInventory({ key: "Model", value: model });
+                    }}
+                    className='vehicle-general__dropdown w-full'
+                    itemTemplate={(option) => handleDeleteInventoryRecord(option, true)}
+                    label='Model (required)'
+                    error={!!errors.Model}
+                    errorMessage={errors.Model}
+                />
+            </div>
+            <div className='col-3'>
+                <TextInput
+                    name='Trim'
+                    label='Trim'
+                    className='vehicle-general__text-input w-full'
+                    value={inventory?.Trim || ""}
+                    maxLength={16}
+                    onChange={({ target: { value } }) => changeInventory({ key: "Trim", value })}
+                />
+            </div>
+            <div className='col-3 relative'>
+                <NumberInput
+                    name='Year'
+                    label='Year (required)'
+                    className='vehicle-general__text-input w-full'
+                    useGrouping={false}
+                    value={parseInt(values.Year) || null}
+                    error={!!errors.Year}
+                    errorMessage={errors.Year}
+                    onValueChange={({ value }) => {
+                        if (!value) {
+                            return changeInventory({ key: "Year", value: "" });
+                        }
+                        setFieldValue("Year", value);
+                        changeInventory({ key: "Year", value: String(value) });
+                    }}
+                />
+            </div>
+
+            <div className='col-3 relative'>
+                <NumberInput
+                    name='mileage'
+                    label='Mileage'
+                    className='vehicle-general__text-input w-full'
+                    value={parseMileage(inventory?.mileage || "0")}
+                    useGrouping={false}
+                    min={0}
+                    error={!!errors.mileage}
+                    errorMessage={errors.mileage}
+                    onValueChange={({ value }) => {
+                        changeInventory({
+                            key: "mileage",
+                            value: value ? String(value) : "0",
+                        });
+                    }}
+                />
+            </div>
+            <div className='col-3'>
+                <ComboBox
+                    optionLabel='name'
+                    optionValue='name'
+                    value={inventory?.ExteriorColor}
+                    onChange={({ value }) => changeInventory({ key: "ExteriorColor", value })}
+                    options={colorList}
+                    className='w-full vehicle-general__dropdown'
+                    label='Color'
+                />
+            </div>
+
+            <div className='col-3'>
+                <ComboBox
+                    optionLabel='name'
+                    optionValue='name'
+                    value={inventory?.InteriorColor}
+                    onChange={({ value }) => changeInventory({ key: "InteriorColor", value })}
+                    options={interiorList}
+                    className='w-full vehicle-general__dropdown'
+                    label='Interior color'
+                />
+            </div>
+
+            <div className='flex col-12'>
+                <h3 className='vehicle-general__title m-0 pr-3'>Vehicle status</h3>
+                <hr className='vehicle-general__line flex-1' />
+            </div>
+
+            <div className='col-3'>
+                <ComboBox
+                    options={auditOptions}
+                    value={selectedAuditKey}
+                    optionLabel='label'
+                    optionValue='value'
+                    onChange={(e) => handleAuditChange(e.value as keyof Audit)}
+                    className='w-full vehicle-general__dropdown'
+                    label='Status'
+                />
+            </div>
+        </div>
+    );
+});

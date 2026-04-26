@@ -1,0 +1,48 @@
+.user-profile-password {
+    margin-top: 20px;
+}
+
+.user-profile-password__forgot {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.user-profile-password__forgot-link {
+    color: var(--admss-app-deep-blue);
+    font-size: 10px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.user-profile-password__confirm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.user-profile-password__button {
+    width: 100%;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 22px;
+}
+
+.user-profile-two-factor {
+    margin-top: 20px;
+}
+
+.user-profile-two-factor__text {
+    font-size: 18px;
+    line-height: 150%;
+    color: var(--admss-app-primary);
+    margin: 0;
+}
+
+.user-profile-two-factor__link {
+    color: var(--admss-app-main-blue);
+    text-decoration: none;
+    cursor: pointer;
+}

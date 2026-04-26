@@ -1,0 +1,69 @@
+.combo-box {
+    .p-dropdown-trigger {
+        color: var(--admss-app-medium-grey);
+        &:hover {
+            color: var(--admss-app-darkest-grey);
+        }
+        .p-icon {
+            font-size: 14px;
+        }
+    }
+
+    .p-dropdown-clear-icon.p-clickable {
+        color: var(--admss-app-medium-grey);
+        width: 14px;
+        height: 14px;
+        margin-top: -0.4rem;
+        &:hover,
+        &:focus {
+            color: var(--admss-app-darkest-grey);
+        }
+    }
+}
+
+.input-error-wrapper {
+    position: relative;
+}
+
+.p-float-label > .input-error-wrapper {
+    display: block;
+    width: 100%;
+}
+
+.input-error-wrapper .p-error {
+    --line-height: 8px;
+    position: absolute;
+    display: inline-block;
+    left: 2px;
+    z-index: 1;
+    max-width: calc(100% - 4px);
+    bottom: -6px;
+}
+
+.input-error-wrapper .p-error small {
+    font-size: 12px;
+}
+
+.input-error-wrapper .p-error::before {
+    content: "";
+    z-index: -1;
+    position: absolute;
+    top: var(--line-height);
+    left: 0;
+    width: 100%;
+    height: var(--line-height);
+    background-color: var(--admss-app-white);
+}
+
+@media (max-width: 1780px) {
+    .input-error-wrapper .p-error {
+        max-width: calc(100% - 20px);
+    }
+}
+
+.combo-box__list .combo-box__list-item {
+    width: 100%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}

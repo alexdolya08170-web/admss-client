@@ -1,0 +1,356 @@
+import { Dialog, DialogProps } from "primereact/dialog";
+import { useEffect, useMemo, useState } from "react";
+import { InputTextarea } from "primereact/inputtextarea";
+import { createTask, getTasksSubUserList } from "http/services/tasks.service";
+import { Status } from "common/models/base-response";
+import { DateInput, PhoneInput } from "dashboard/common/form/inputs";
+import { useStore } from "store/hooks";
+import { CompanySearch } from "dashboard/contacts/common/company-search";
+import { DealSearch } from "dashboard/deals/common/deal-search";
+import { AccountSearch } from "dashboard/accounts/common/account-search";
+import { PostDataTask, Task, TaskStatus, TaskUser } from "common/models/tasks";
+import { formatDateForServer, serverDateToLocal, validateDates } from "common/helpers";
+import "./index.css";
+import { observer } from "mobx-react-lite";
+import { ContactUser } from "common/models/contact";
+import { Deal } from "common/models/deals";
+import { Account } from "common/models/accounts";
+import { ComboBox } from "dashboard/common/form/dropdown";
+import { useToastMessage } from "common/hooks";
+import { ALL_FIELDS } from "common/constants/fields";
+import { SplitButton } from "primereact/splitbutton";
+import { TASKS_STATUS_LIST } from "dashboard/tasks/common";
+import { FilterOptions } from "dashboard/common/filter";
+import { Button } from "primereact/button";
+
+enum DATE_TYPE {
+    START = "startdate",
+    DEADLINE = "deadline",
+}
+
+interface AddTaskDialogProps extends DialogProps {
+    currentTask?: Task;
+    onAction?: () => void;
+}
+
+const getDefaultDeadlineDate = (): Date => {
+    const date = new Date();
+    date.setHours(23, 59, 0, 0);
+    return date;
+};
+
+const initializeTaskState = (task?: Task, defaultUseruid?: string): Partial<PostDataTask> => ({
+    startdate: formatDateForServer(
+        task?.startdate ? serverDateToLocal(task.startdate) : new Date()
+    ),
+    deadline: formatDateForServer(
+        task?.deadline ? serverDateToLocal(task.deadline) : getDefaultDeadlineDate()
+    ),
+    useruid: task?.useruid || defaultUseruid || "",
+    accountuid: task?.accountuid || "",
+    accountname: task?.accountname || "",
+    dealuid: task?.dealuid || "",
+    dealname: task?.dealname || "",
+    contactuid: task?.contactuid || "",
+    contactname: task?.contactname || "",
+    phone: task?.phone || "",
+    description: task?.description || "",
+    status: task?.task_status as TaskStatus,
+});
+
+export const AddTaskDialog = observer(
+    ({ visible, onHide, header, currentTask, onAction }: AddTaskDialogProps) => {
+        const userStore = useStore().userStore;
+        const { authUser } = userStore;
+        const { showSuccess, showError } = useToastMessage();
+        const [taskState, setTaskState] = useState<Partial<PostDataTask>>(initializeTaskState());
+        const [assignToData, setAssignToData] = useState<TaskUser[] | null>(null);
+        const [dateError, setDateError] = useState<string>("");
+        const [isFormChanged, setIsFormChanged] = useState<boolean>(false);
+        const [isSaving, setIsSaving] = useState<boolean>(false);
+
+        const currentUser: TaskUser = useMemo(
+            () => ({
+                useruid: authUser?.useruid || "",
+                username: authUser?.loginname || authUser?.username || "",
+                updated: authUser?.modified || "",
+                created: authUser?.started || "",
+                createdbyuid: authUser?.sessionuid || "",
+            }),
+            [authUser]
+        );
+
+        const isSubmitDisabled = !!dateError || !isFormChanged || isSaving || !taskState.useruid;
+
+        const handleGetTasksSubUserList = async () => {
+            const response = await getTasksSubUserList(authUser!.useruid);
+            if (response && Array.isArray(response)) setAssignToData([currentUser, ...response]);
+
+            const newTaskState = initializeTaskState(currentTask, authUser?.useruid);
+            setTaskState(newTaskState);
+            if (!currentTask && newTaskState.useruid) {
+                setIsFormChanged(true);
+            }
+        };
+
+        useEffect(() => {
+            if (authUser && visible) {
+                handleGetTasksSubUserList();
+            }
+        }, [visible, currentTask]);
+
+        useEffect(() => {
+            if (!visible) {
+                setTaskState(initializeTaskState(undefined, authUser?.useruid));
+                setDateError("");
+                setIsFormChanged(false);
+                setAssignToData(null);
+            }
+        }, [visible, authUser?.useruid]);
+
+        const handleDateChange = (key: DATE_TYPE, date: Date) => {
+            const formattedDate = formatDateForServer(date);
+            if (
+                (key === DATE_TYPE.START &&
+                    validateDates(formattedDate, taskState.deadline || "")) ||
+                (key === DATE_TYPE.DEADLINE &&
+                    validateDates(taskState.startdate || "", formattedDate))
+            ) {
+                setTaskState((prev) => ({ ...prev, [key]: formattedDate }));
+                setDateError("");
+                setIsFormChanged(true);
+            }
+        };
+
+        const handleInputChange = (key: keyof PostDataTask, value: string) => {
+            setTaskState((prev) => ({ ...prev, [key]: value }));
+            setIsFormChanged(true);
+        };
+
+        const handleSaveTaskData = async () => {
+            if (
+                !validateDates(taskState.startdate || "", taskState.deadline || "") ||
+                !taskState.useruid
+            )
+                return;
+
+            const payload: Partial<PostDataTask> = {
+                ...taskState,
+                accountname: taskState.accountuid ? taskState.accountname : "",
+                dealname: taskState.dealuid ? taskState.dealname : "",
+                contactname: taskState.contactname,
+            };
+
+            setIsSaving(true);
+
+            const response = await createTask(payload, currentTask?.itemuid);
+
+            if (response?.status === Status.ERROR) {
+                showError(response.error);
+                setDateError("");
+            } else {
+                showSuccess(`Task ${currentTask ? "updated" : "created"} successfully!`);
+                onHide();
+                onAction?.();
+            }
+
+            setIsSaving(false);
+        };
+
+        const handleGetAccountInfo = (account: Account) => {
+            handleInputChange("accountuid", account.accountuid);
+            handleInputChange("accountname", account.name);
+        };
+
+        const handleAccountNameChange = (value: string) => {
+            handleInputChange("accountname", value);
+            if (taskState.accountuid) {
+                handleInputChange("accountuid", "");
+            }
+        };
+
+        const handleAccountClear = () => {
+            handleInputChange("accountname", "");
+            handleInputChange("accountuid", "");
+        };
+
+        const handleGetCompanyInfo = (contact: ContactUser) => {
+            handleInputChange("contactuid", contact.contactuid);
+            handleInputChange(
+                "contactname",
+                contact.companyName ||
+                    `${contact.firstName} ${contact.lastName}`.trim() ||
+                    contact.userName
+            );
+        };
+
+        const handleContactNameChange = (value: string) => {
+            handleInputChange("contactname", value);
+            if (taskState.contactuid) {
+                handleInputChange("contactuid", "");
+            }
+        };
+
+        const handleGetDealInfo = (deal: Deal) => {
+            handleInputChange("dealuid", deal.dealuid);
+            handleInputChange("dealname", deal.contactinfo);
+        };
+
+        const handleDealNameChange = (value: string) => {
+            handleInputChange("dealname", value);
+            if (taskState.dealuid) {
+                handleInputChange("dealuid", "");
+            }
+        };
+
+        const handleDealClear = () => {
+            handleInputChange("dealname", "");
+            handleInputChange("dealuid", "");
+        };
+
+        const taskFilterOptions = (): FilterOptions[] => {
+            return TASKS_STATUS_LIST.map((status) => ({
+                label: status.name,
+                value: status.value,
+                icon: "pi pi-circle",
+                iconClassName: `pi-circle--${status.value}`,
+                command: () => {
+                    setTaskState((prev) => ({ ...prev, status: status.name as TaskStatus }));
+                    setIsFormChanged(true);
+                },
+            }));
+        };
+
+        const getStatusClassName = (): string => {
+            if (!taskState.status) return "";
+            const statusName = taskState.status.toLowerCase().replace(/ /g, "-");
+            return `task-status--${statusName}`;
+        };
+
+        return (
+            <Dialog
+                draggable={false}
+                position='top'
+                onHide={onHide}
+                visible={visible}
+                header={header}
+                className='dialog dialog__add-task task-dialog'
+            >
+                <div className='p-dialog-content-body' tabIndex={0}>
+                    <ComboBox
+                        label='Assign to (required)'
+                        value={taskState.useruid || authUser?.useruid || ""}
+                        options={assignToData || []}
+                        optionLabel='username'
+                        optionValue='useruid'
+                        required
+                        className='flex align-items-center'
+                        onChange={(e) => handleInputChange("useruid", e.value)}
+                    />
+
+                    <div className='flex flex-column md:flex-row column-gap-3 relative'>
+                        <div className='p-inputgroup'>
+                            <DateInput
+                                value={
+                                    new Date(taskState.startdate || formatDateForServer(new Date()))
+                                }
+                                date={
+                                    new Date(taskState.startdate || formatDateForServer(new Date()))
+                                }
+                                name='Start Date'
+                                showTime
+                                hourFormat='12'
+                                onChange={(e) => handleDateChange(DATE_TYPE.START, e.value as Date)}
+                            />
+                        </div>
+                        <div className='p-inputgroup'>
+                            <DateInput
+                                value={
+                                    new Date(
+                                        taskState.deadline ||
+                                            formatDateForServer(getDefaultDeadlineDate())
+                                    )
+                                }
+                                date={
+                                    new Date(
+                                        taskState.deadline ||
+                                            formatDateForServer(getDefaultDeadlineDate())
+                                    )
+                                }
+                                name='Due Date'
+                                showTime
+                                hourFormat='12'
+                                onChange={(e) =>
+                                    handleDateChange(DATE_TYPE.DEADLINE, e.value as Date)
+                                }
+                            />
+                        </div>
+                        {dateError && <small className='p-error'>{dateError}</small>}
+                    </div>
+
+                    <AccountSearch
+                        value={taskState.accountname?.trim() || ""}
+                        returnedField={ALL_FIELDS}
+                        getFullInfo={handleGetAccountInfo}
+                        onChange={({ target: { value } }) => handleAccountNameChange(value)}
+                        onClear={handleAccountClear}
+                        validateOnBlur
+                        hasValidSelection={!!taskState.accountuid}
+                        name='Account (optional)'
+                    />
+
+                    <DealSearch
+                        value={taskState.dealname?.trim() || ""}
+                        returnedField={ALL_FIELDS}
+                        getFullInfo={handleGetDealInfo}
+                        onChange={({ target: { value } }) => handleDealNameChange(value)}
+                        onClear={handleDealClear}
+                        validateOnBlur
+                        hasValidSelection={!!taskState.dealuid}
+                        name='Deal (optional)'
+                    />
+
+                    <CompanySearch
+                        value={taskState.contactname?.trim() || ""}
+                        returnedField={ALL_FIELDS}
+                        getFullInfo={handleGetCompanyInfo}
+                        onChange={({ target: { value } }) => handleContactNameChange(value)}
+                        name='Contact (optional)'
+                    />
+                    <PhoneInput
+                        value={taskState.phone || ""}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        name='Phone Number (optional)'
+                        withValidationMessage={false}
+                    />
+                    <span className='p-float-label relative'>
+                        <InputTextarea
+                            value={taskState.description || ""}
+                            onChange={(e) => handleInputChange("description", e.target.value)}
+                            className='p-dialog-description'
+                        />
+                        <label className='float-label'>Description</label>
+                    </span>
+                </div>
+
+                <div className='task-dialog__footer'>
+                    <SplitButton
+                        outlined
+                        label={`${taskState.status ? taskState.status : "Status"}`}
+                        dropdownIcon='adms-arrow-bottom'
+                        model={taskFilterOptions()}
+                        className={`task-dialog__status-button status-button ${getStatusClassName()}`}
+                        appendTo='self'
+                        menuClassName='status-button__menu'
+                    />
+                    <Button
+                        label={`${currentTask ? "Update" : "Save"}`}
+                        onClick={handleSaveTaskData}
+                        className='task-dialog__save-button'
+                        disabled={isSubmitDisabled}
+                    />
+                </div>
+            </Dialog>
+        );
+    }
+);

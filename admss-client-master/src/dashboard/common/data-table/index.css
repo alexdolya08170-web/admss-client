@@ -1,0 +1,116 @@
+.expansion-column {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    .expansion-column__button.p-button {
+        color: var(--admss-app-primary-main-green);
+        background: transparent;
+        width: 20px;
+        height: 20px;
+        border: none;
+        &:hover,
+        &:focus,
+        &:active {
+            color: var(--admss-app-primary-main-green);
+            background: transparent;
+            outline: none;
+            box-shadow: none;
+        }
+    }
+}
+
+.p-datatable.p-datatable-gridlines:has(.p-datatable-thead):has(.p-datatable-tbody)
+    .p-datatable-tbody
+    > tr
+    > td.expansion-column-cell
+    + td {
+    border-left: none;
+}
+
+.expanded-row {
+    width: 100%;
+    display: flex;
+    padding-left: var(--expanded-row-left-padding, 60px);
+    column-gap: 20px;
+    .expanded-row__label {
+        font-weight: 700;
+    }
+}
+
+.data-table-wrapper {
+    max-width: var(--data-table-base-card-width);
+    height: var(--data-table-wrapper-height, var(--admss-app-default-card-height));
+    max-height: calc(
+        100vh - var(--admss-app-header-height) - var(--admss-app-content-top-margin) - 10px
+    );
+    border-radius: 15px;
+    overflow: hidden;
+    padding: var(--data-table-padding, 40px);
+    padding-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+
+    .p-datatable.p-datatable-gridlines:has(.p-datatable-emptymessage) .p-datatable-thead > tr > th {
+        border-left: none;
+        border-right: none;
+        pointer-events: none;
+        cursor: default;
+
+        &:hover {
+            background: transparent;
+        }
+
+        .p-column-resizer {
+            display: none;
+        }
+    }
+
+    .p-paginator {
+        margin-top: auto;
+        padding-top: var(--data-table-paginator-padding-top, 50px);
+        padding-bottom: 0;
+        .p-paginator-pages .p-paginator-page {
+            width: 50px;
+            height: 50px;
+        }
+    }
+
+    .p-datatable,
+    .card-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .p-tabview {
+        width: 100%;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
+        .p-tabview-panels {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            padding: 0;
+        }
+
+        .p-tabview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+    }
+
+    .p-datatable-wrapper {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+    }
+}

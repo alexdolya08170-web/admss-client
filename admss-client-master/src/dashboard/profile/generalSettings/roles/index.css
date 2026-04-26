@@ -1,0 +1,164 @@
+.roles-page {
+    --card-height: 83vh;
+    --card-max-height: 1120px;
+    --content-height: 700px;
+    --sidebar-width: 440px;
+    --title-height: 63px;
+}
+
+.roles-page .card {
+    padding: 40px;
+    padding-right: 30px;
+    height: calc(var(--card-height) + var(--title-height));
+    max-height: var(--card-max-height);
+    display: flex;
+    flex-direction: column;
+}
+
+.roles-page .card-header__title {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.roles-content {
+    display: flex;
+}
+
+.roles-sidebar {
+    flex-direction: column;
+    flex: 0 0 var(--sidebar-width);
+    width: var(--sidebar-width);
+    border: none;
+    border-right: 2px solid var(--admss-app-light-blue);
+    align-self: flex-start;
+}
+
+.roles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.roles-list-item {
+    padding: 15px 20px;
+    cursor: pointer;
+    color: var(--admss-app-primary);
+    border: none;
+}
+
+.roles-list-item.active {
+    color: var(--admss-app-primary);
+    background: var(--admss-app-light-blue);
+    border-radius: 0;
+}
+
+.roles-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.roles-main > .grid {
+    padding-left: 40px;
+    position: relative;
+}
+
+.roles-main > .grid::before {
+    content: "";
+    position: absolute;
+    left: 9px;
+    top: 9px;
+    bottom: 96px;
+    width: 2px;
+    background: var(--admss-app-light-blue);
+}
+
+.roles-page .new-role-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 245px;
+    height: 54px;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.roles-table .p-datatable-wrapper {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.roles-table .p-datatable-tbody > tr.roles-table-row > td {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+}
+
+.roles-main__buttons {
+    display: flex;
+    padding-top: 0.5rem;
+    justify-content: flex-end;
+    gap: 20px;
+    .p-button {
+        text-transform: uppercase;
+    }
+}
+
+.roles-table-row {
+    .roles-table-row__buttons {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .p-button {
+        padding: 0;
+        width: 30px;
+        &.table-delete-button {
+            color: var(--admss-app-light-grey);
+        }
+        &.p-button-text:enabled:hover {
+            &:enabled:hover,
+            &:enabled:focus,
+            &:enabled:active {
+                background: transparent;
+                box-shadow: none;
+                &.table-copy-button {
+                    color: var(--admss-app-statuses-default);
+                }
+                &.table-delete-button {
+                    color: var(--admss-app-dark-blue);
+                }
+            }
+        }
+    }
+}
+
+.roles-confirm-dialog {
+    .confirm-header__icon {
+        font-size: 5.5rem;
+        padding-bottom: 30px;
+    }
+    .confirm-header__title {
+        font-size: 26px;
+    }
+
+    .p-dialog-content {
+        padding-top: 30px;
+        padding-bottom: 10px;
+    }
+    .confirm-body {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    .p-dialog-footer {
+        .p-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 130px;
+            height: 60px;
+            font-size: 20px;
+        }
+    }
+}

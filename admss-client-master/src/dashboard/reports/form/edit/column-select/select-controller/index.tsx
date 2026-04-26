@@ -1,0 +1,202 @@
+import { ReportServiceColumns, ReportServices } from "common/models/reports";
+import { Status } from "common/models/base-response";
+import { getReportColumns, getReportDatasets } from "http/services/reports.service";
+import { useStore } from "store/hooks";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useToastMessage } from "common/hooks";
+import { useParams } from "react-router-dom";
+import { CREATE_ID } from "common/constants/links";
+
+interface Dataset {
+    id: number;
+    key: string;
+    match: { id: number; name: string }[];
+    name: ReportServices;
+}
+
+export const dataSetValues: ReportServices[] = [
+    ReportServices.INVENTORY,
+    ReportServices.CONTACTS,
+    ReportServices.DEALS,
+    ReportServices.ACCOUNTS,
+];
+
+const initialDataSetsData: Record<ReportServices, ReportServiceColumns[]> = {
+    [ReportServices.INVENTORY]: [],
+    [ReportServices.CONTACTS]: [],
+    [ReportServices.DEALS]: [],
+    [ReportServices.ACCOUNTS]: [],
+};
+
+const getCompatibleDatasets = (
+    selectedDatasets: ReportServices[],
+    allDatasets: Dataset[]
+): ReportServices[] => {
+    if (!allDatasets.length || !selectedDatasets.length) {
+        return dataSetValues;
+    }
+
+    const selectedDatasetObjects = selectedDatasets
+        .map((name) => allDatasets.find((dataset) => dataset.name === name))
+        .filter(Boolean) as Dataset[];
+
+    return dataSetValues.filter((datasetName) => {
+        const dataset = allDatasets.find((dataset) => dataset.name === datasetName);
+        if (!dataset) return false;
+
+        if (selectedDatasets.includes(datasetName)) return true;
+
+        const datasetMatches = new Set(dataset.match.map((match) => match.id));
+        return selectedDatasetObjects.every((selected) => {
+            const selectedMatches = new Set(selected.match.map((match) => match.id));
+            return datasetMatches.has(selected.id) && selectedMatches.has(dataset.id);
+        });
+    });
+};
+
+export const useReportColumnController = () => {
+    const { id: routeId } = useParams();
+    const store = useStore().reportStore;
+    const { report } = store;
+    const userStore = useStore().userStore;
+    const { authUser } = userStore;
+    const { showError } = useToastMessage();
+    const [dataSet, setDataSet] = useState<ReportServices | null>(null);
+    const [selectedValues, setSelectedValues] = useState<ReportServiceColumns[]>([]);
+    const [availableValues, setAvailableValues] = useState<ReportServiceColumns[]>([]);
+    const [initialDataSets, setInitialDataSets] =
+        useState<Record<ReportServices, ReportServiceColumns[]>>(initialDataSetsData);
+    const [availableDatasets, setAvailableDatasets] = useState<ReportServices[]>(dataSetValues);
+    const [datasets, setDatasets] = useState<Dataset[]>([]);
+    const initialSelectedValuesRef = useRef<ReportServiceColumns[] | null>(null);
+    const selectedValuesHydratedRef = useRef(false);
+
+    useEffect(() => {
+        initialSelectedValuesRef.current = null;
+        selectedValuesHydratedRef.current = false;
+    }, [routeId]);
+
+    useEffect(() => {
+        const fetchDatasets = async () => {
+            if (authUser?.useruid) {
+                const response = await getReportDatasets(authUser.useruid);
+                if (Array.isArray(response)) {
+                    setDatasets(response);
+                }
+            }
+        };
+        fetchDatasets();
+    }, [authUser?.useruid]);
+
+    useEffect(() => {
+        if (!datasets.length || !report) return;
+
+        if (report?.columns) {
+            const initialSelectedValues = report.columns.filter(Boolean);
+            setSelectedValues(initialSelectedValues);
+            initialSelectedValuesRef.current = initialSelectedValues;
+
+            const selectedDatasets = Array.from(
+                new Set(
+                    initialSelectedValues.map(
+                        (item: ReportServiceColumns) => item.dataset as ReportServices
+                    )
+                )
+            ).filter(Boolean) as ReportServices[];
+            const compatibleDatasets = getCompatibleDatasets(selectedDatasets, datasets);
+            setAvailableDatasets(compatibleDatasets);
+        }
+    }, [report, datasets, authUser?.useruid]);
+
+    useEffect(() => {
+        if (!routeId || routeId === CREATE_ID) {
+            selectedValuesHydratedRef.current = true;
+            return;
+        }
+
+        const initialSelectedValues = initialSelectedValuesRef.current;
+        if (!initialSelectedValues) return;
+
+        const isSame =
+            selectedValues.length === initialSelectedValues.length &&
+            selectedValues.every((item, idx) => item.data === initialSelectedValues[idx]?.data);
+
+        if (isSame) {
+            selectedValuesHydratedRef.current = true;
+        }
+    }, [selectedValues, routeId]);
+
+    useEffect(() => {
+        const selectedDatasets = Array.from(
+            new Set(
+                selectedValues.map((item: ReportServiceColumns) => item.dataset as ReportServices)
+            )
+        ).filter(Boolean) as ReportServices[];
+
+        const compatibleDatasets = getCompatibleDatasets(selectedDatasets, datasets);
+        setAvailableDatasets(compatibleDatasets);
+
+        if (dataSet && !compatibleDatasets.includes(dataSet)) {
+            setDataSet(null);
+            setAvailableValues([]);
+        }
+    }, [selectedValues, datasets]);
+
+    useEffect(() => {
+        if (dataSet) {
+            const allColumns = initialDataSets[dataSet] || [];
+            const filtered = allColumns.filter(
+                (column) => !selectedValues.some((selected) => selected.data === column.data)
+            );
+            setAvailableValues(filtered);
+        }
+    }, [dataSet, selectedValues, initialDataSets]);
+
+    useEffect(() => {
+        const fetchColumns = async () => {
+            const useruid = authUser?.useruid;
+            if (!dataSet || !useruid) return;
+            if (initialDataSets[dataSet].length > 0) return;
+
+            const response = await getReportColumns({ service: dataSet, useruid });
+            if (response?.status === Status.ERROR) {
+                showError(response?.error || "Error while fetching report columns");
+            } else if (response) {
+                const columnsWithOrigin = response.map((item: ReportServiceColumns) => ({
+                    ...item,
+                    originalDataSet: dataSet,
+                }));
+                setInitialDataSets((prev) => ({
+                    ...prev,
+                    [dataSet]: columnsWithOrigin,
+                }));
+            }
+        };
+        fetchColumns();
+    }, [dataSet, authUser?.useruid, showError]);
+
+    const allowColumnStoreSync = useMemo(() => {
+        if (!datasets.length) return false;
+        if (!routeId || routeId === CREATE_ID) return true;
+        return !!report?.itemuid;
+    }, [datasets.length, routeId, report?.itemuid]);
+
+    useEffect(() => {
+        if (!allowColumnStoreSync) return;
+        if (routeId && routeId !== CREATE_ID && !selectedValuesHydratedRef.current) return;
+
+        store.reportColumns = selectedValues;
+        store.recomputeState();
+    }, [selectedValues, allowColumnStoreSync, routeId, store]);
+
+    return {
+        dataSet,
+        report,
+        setDataSet,
+        selectedValues,
+        setSelectedValues,
+        availableValues,
+        setAvailableValues,
+        availableDatasets,
+    };
+};

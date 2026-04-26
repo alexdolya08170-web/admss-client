@@ -1,0 +1,89 @@
+.sign {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    align-items: center;
+    justify-content: center;
+    background: url("./background-sign.png") no-repeat;
+    background-size: cover;
+}
+
+.sign-in {
+    background: var(--surface-a);
+    width: 360px;
+    border-radius: 15px;
+    padding-top: 80px;
+    padding-bottom: 80px;
+}
+
+.sign-in-wrapper {
+    width: 406px;
+    margin: auto;
+}
+
+.sign__title {
+    margin-top: 0;
+    margin-bottom: 30px;
+    color: var(--admss-app-main-blue);
+    text-align: center;
+    font-size: 2.66rem;
+}
+
+.sign__button {
+    width: 100%;
+    height: 60px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.sign-in__input.space {
+    margin-bottom: 1rem;
+}
+
+.sign-controls {
+    text-align: center;
+    margin: 0;
+}
+
+.sign-controls__link {
+    text-decoration: none;
+    font-weight: 800;
+    color: var(--admss-app-main-blue);
+}
+
+.user-help {
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+}
+
+.user-help__label {
+    color: var(--admss-app-primary);
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.user-help__link {
+    color: var(--admss-app-deep-blue);
+    text-decoration: none;
+}
+
+@media (min-width: 768px) {
+    .sign-in {
+        width: 420px;
+    }
+}
+
+@media (min-width: 1400px) {
+    .sign-in {
+        width: 460px;
+    }
+}
+
+@media (min-width: 1920px) {
+    .sign-in {
+        width: 545px;
+    }
+}

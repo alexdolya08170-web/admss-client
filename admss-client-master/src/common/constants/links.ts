@@ -1,0 +1,207 @@
+export const HELP_PAGE: string = "https://www.admss.com/";
+export const CONTACT_SUPPORT: string = "contact-support";
+export const SERVICE_UPDATE_PAGE: string = "/service-update";
+export const CREATE_ID: string = "create";
+export const TAB_ID: string = "tab";
+export const USER_PROFILE_PAGE_ID: string = "user-profile";
+export const HOME_PAGE: string = "/";
+export const TWO_FA_PAGE: string = "/2fa";
+
+export const DASHBOARD_PAGE: string = "/dashboard";
+export const CREATE_PATH: string = `/${CREATE_ID}`;
+
+interface DealsPage {
+    readonly MAIN: string;
+    CREATE(): string;
+    WASHOUT(id: string): string;
+    EDIT(id: string): string;
+}
+
+export const DEALS_PAGE: Readonly<DealsPage> = {
+    MAIN: `${DASHBOARD_PAGE}/deals`,
+
+    CREATE() {
+        return `${this.MAIN}${CREATE_PATH}`;
+    },
+    WASHOUT(id: string) {
+        return `${this.MAIN}/${id}/washout`;
+    },
+    EDIT(id: string) {
+        return `${this.MAIN}/${id}`;
+    },
+};
+
+interface LeadsPage {
+    readonly MAIN: string;
+    CREATE(): string;
+    EDIT(id: string): string;
+}
+
+export const LEADS_PAGE: Readonly<LeadsPage> = {
+    MAIN: `${DASHBOARD_PAGE}/leads`,
+    CREATE() {
+        return `${this.MAIN}${CREATE_PATH}`;
+    },
+    EDIT(id: string) {
+        return `${this.MAIN}/${id}`;
+    },
+};
+
+interface InventoryPage {
+    readonly MAIN: string;
+    CREATE(): string;
+    EDIT(id: string): string;
+}
+export const INVENTORY_PAGE: Readonly<InventoryPage> = {
+    MAIN: `${DASHBOARD_PAGE}/inventory`,
+    CREATE() {
+        return `${this.MAIN}${CREATE_PATH}`;
+    },
+    EDIT(id: string) {
+        return `${this.MAIN}/${id}`;
+    },
+};
+
+interface ContactsPage {
+    readonly MAIN: string;
+    CREATE(): string;
+    EDIT(id: string): string;
+}
+
+export const CONTACTS_PAGE: Readonly<ContactsPage> = {
+    MAIN: `${DASHBOARD_PAGE}/contacts`,
+    CREATE() {
+        return `${this.MAIN}${CREATE_PATH}`;
+    },
+    EDIT(id: string) {
+        return `${this.MAIN}/${id}`;
+    },
+};
+
+interface AccountsPage {
+    readonly MAIN: string;
+    CREATE(): string;
+    NOTES_TAB: string;
+    PROMISE_TO_PAY_TAB: string;
+    EDIT(id: string): string;
+    NOTES(id: string): string;
+    PROMISE_TO_PAY(id: string): string;
+    TAKE_PAYMENT_TAB: string;
+    TAKE_PAYMENT(id: string): string;
+}
+export const ACCOUNTS_PAGE: Readonly<AccountsPage> = {
+    MAIN: `${DASHBOARD_PAGE}/accounts`,
+    NOTES_TAB: `?${TAB_ID}=notes`,
+    PROMISE_TO_PAY_TAB: `?${TAB_ID}=promise-to-pay`,
+    TAKE_PAYMENT_TAB: `?${TAB_ID}=take-payment`,
+    CREATE() {
+        return `${this.MAIN}${CREATE_PATH}`;
+    },
+    EDIT(id: string) {
+        return `${this.MAIN}/${id}`;
+    },
+    NOTES(id: string) {
+        return `${this.EDIT(id)}${this.NOTES_TAB}`;
+    },
+    PROMISE_TO_PAY(id: string) {
+        return `${this.EDIT(id)}${this.PROMISE_TO_PAY_TAB}`;
+    },
+    TAKE_PAYMENT(id: string) {
+        return `${this.EDIT(id)}${this.TAKE_PAYMENT_TAB}`;
+    },
+};
+
+interface ReportsPage {
+    readonly MAIN: string;
+    CREATE(): string;
+    EDIT(id: string): string;
+}
+export const REPORTS_PAGE: Readonly<ReportsPage> = {
+    MAIN: `${DASHBOARD_PAGE}/reports`,
+    CREATE() {
+        return `${this.MAIN}${CREATE_PATH}`;
+    },
+    EDIT(id: string) {
+        return `${this.MAIN}/${id}`;
+    },
+};
+
+interface ExportWebPage {
+    readonly MAIN: string;
+}
+export const EXPORT_WEB_PAGE: Readonly<ExportWebPage> = {
+    MAIN: `${DASHBOARD_PAGE}/export-web`,
+};
+
+interface TasksPage {
+    readonly MAIN: string;
+}
+export const TASKS_PAGE: Readonly<TasksPage> = {
+    MAIN: `${DASHBOARD_PAGE}/tasks`,
+};
+
+interface UsersPage {
+    readonly MAIN: string;
+    CREATE(): string;
+    EDIT(id: string): string;
+}
+
+export const USERS_PAGE: Readonly<UsersPage> = {
+    MAIN: `${DASHBOARD_PAGE}/users`,
+    CREATE() {
+        return `${this.MAIN}${CREATE_PATH}`;
+    },
+    EDIT(id: string) {
+        return `${this.MAIN}/${id}`;
+    },
+};
+
+interface SettingsPage {
+    readonly MAIN: string;
+    ROLES(): string;
+    ROLES_CREATE(): string;
+    ROLES_EDIT(id: string): string;
+}
+export const SETTINGS_PAGE: Readonly<SettingsPage> = {
+    MAIN: `${DASHBOARD_PAGE}/settings`,
+    ROLES() {
+        return `${this.MAIN}?section=roles`;
+    },
+    ROLES_CREATE() {
+        return `${this.MAIN}/roles${CREATE_PATH}`;
+    },
+    ROLES_EDIT(id: string) {
+        return `${this.MAIN}/roles/${id}`;
+    },
+};
+
+interface UserProfilePage {
+    readonly MAIN: string;
+}
+export const USER_PROFILE_PAGE: Readonly<UserProfilePage> = {
+    MAIN: `${DASHBOARD_PAGE}/${USER_PROFILE_PAGE_ID}`,
+};
+
+interface SidebarPage {
+    readonly HOME: string;
+    readonly INVENTORY: string;
+    readonly CONTACTS: string;
+    readonly DEALS: string;
+    readonly LEADS: string;
+    readonly ACCOUNTS: string;
+    readonly REPORTS: string;
+    readonly EXPORT_WEB: string;
+    readonly TASKS: string;
+}
+
+export const SIDEBAR_PAGE: Readonly<SidebarPage> = {
+    HOME: `${DASHBOARD_PAGE}`,
+    INVENTORY: INVENTORY_PAGE.MAIN,
+    CONTACTS: CONTACTS_PAGE.MAIN,
+    DEALS: DEALS_PAGE.MAIN,
+    LEADS: LEADS_PAGE.MAIN,
+    ACCOUNTS: ACCOUNTS_PAGE.MAIN,
+    REPORTS: REPORTS_PAGE.MAIN,
+    EXPORT_WEB: EXPORT_WEB_PAGE.MAIN,
+    TASKS: TASKS_PAGE.MAIN,
+};

@@ -1,0 +1,67 @@
+.password-field {
+    width: 100%;
+}
+
+.password-field-container {
+    position: relative;
+    .p-error {
+        position: absolute;
+        display: inline-block;
+        bottom: -6px;
+        left: 2px;
+        font-size: 12px;
+        z-index: 1;
+        max-width: calc(100% - 4px);
+        @media (max-width: 1780px) {
+            max-width: calc(100% - 20px);
+        }
+        &::before {
+            --line-height: 8px;
+            content: "";
+            z-index: -1;
+            position: absolute;
+            top: calc(var(--line-height) / 2);
+            left: 0;
+            width: 100%;
+            height: var(--line-height);
+            background-color: var(--admss-app-white);
+        }
+    }
+}
+
+.password-field__content {
+    max-width: 349px;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 400;
+    font-family: "Open Sans";
+
+    .password-field__content--success {
+        color: var(--admss-app-success);
+    }
+    .password-field__content--error {
+        color: var(--admss-app-red);
+    }
+}
+
+.password-field-panel {
+    background-color: var(--admss-app-white-blue);
+    padding: 10px;
+}
+
+.password-field-input {
+    width: 100%;
+    + i span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 24px;
+        color: var(--admss-app-light-grey);
+        &:hover {
+            color: var(--admss-app-medium-grey);
+        }
+    }
+}

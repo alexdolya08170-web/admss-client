@@ -1,0 +1,15 @@
+.media-fileupload--documents .media-choose .info-panel__panel {
+    min-width: 271px;
+}
+
+.media-documents__item {
+    width: 48%;
+    & > .media-uploaded__checkbox {
+        margin-left: 0;
+    }
+}
+
+.presentation__document {
+    object-fit: cover;
+    border-radius: 2px;
+}
